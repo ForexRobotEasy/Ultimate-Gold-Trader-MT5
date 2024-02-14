@@ -1,0 +1,156 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                                     Ultimate Gold Trader MT5|
+//|                                                  Developer: Forex Robot Easy Team |
+//|                                        Website: forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+// Include necessary libraries and indicators
+#include <MovingAverages.mqh>
+#include <ADX.mqh>
+
+// Define global variables
+double riskLevel = 0.02; // Risk level as a percentage of account balance
+double stopLoss = 100; // Default stop loss level in points
+double takeProfit = 200; // Default take profit level in points
+double trailingStop = 50; // Default trailing stop level in points
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Set up indicator parameters
+    int maPeriod = 14; // Moving average period
+    int adxPeriod = 14; // ADX period
+
+    // Initialize indicators
+    MovingAverages ma;
+    ma.create(maPeriod);
+    ma.setAppliedPrice(PRICE_CLOSE);
+
+    ADX adx;
+    adx.create(adxPeriod);
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Clean up indicators
+    MovingAverages ma;
+    ma.destroy();
+
+    ADX adx;
+    adx.destroy();
+}
+
+//+------------------------------------------------------------------+
+//| Expert start function                                            |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Get current account balance
+    double accountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+
+    // Calculate lot size based on risk level
+    double lotSize = accountBalance * riskLevel;
+
+    // Calculate stop loss and take profit levels based on default values
+    double stopLossLevel = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_POINT) * stopLoss, _Digits);
+    double takeProfitLevel = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_POINT) * takeProfit, _Digits);
+
+    // Calculate trailing stop level based on default value
+    double trailingStopLevel = NormalizeDouble(SymbolInfoDouble(_Symbol, SYMBOL_POINT) * trailingStop, _Digits);
+
+    // Check for buy signal
+    if (IsBuySignal())
+    {
+        // Place buy order
+        BuyOrder(lotSize, stopLossLevel, takeProfitLevel, trailingStopLevel);
+    }
+
+    // Check for sell signal
+    if (IsSellSignal())
+    {
+        // Place sell order
+        SellOrder(lotSize, stopLossLevel, takeProfitLevel, trailingStopLevel);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Check for buy signal                                             |
+//+------------------------------------------------------------------+
+bool IsBuySignal()
+{
+    // Get indicator values
+    double maValue = iMA(NULL, 0, maPeriod, 0, MODE_SMA, PRICE_CLOSE, 0);
+    double adxValue = iADX(NULL, 0, adxPeriod, PRICE_CLOSE, MODE_MAIN, 0);
+
+    // Add additional indicator checks here
+
+    // Generate buy signal if conditions are met
+    if (maValue > 0 && adxValue > 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check for sell signal                                            |
+//+------------------------------------------------------------------+
+bool IsSellSignal()
+{
+    // Get indicator values
+    double maValue = iMA(NULL, 0, maPeriod, 0, MODE_SMA, PRICE_CLOSE, 0);
+    double adxValue = iADX(NULL, 0, adxPeriod, PRICE_CLOSE, MODE_MAIN, 0);
+
+    // Add additional indicator checks here
+
+    // Generate sell signal if conditions are met
+    if (maValue < 0 && adxValue > 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| Place buy order                                                  |
+//+------------------------------------------------------------------+
+void BuyOrder(double lotSize, double stopLossLevel, double takeProfitLevel, double trailingStopLevel)
+{
+    // Place buy order code here
+    // ...
+
+    // Set stop loss and take profit levels
+    OrderStopLoss(stopLossLevel);
+    OrderTakeProfit(takeProfitLevel);
+
+    // Enable trailing stop
+    OrderSelect(OrderTicket(), SELECT_BY_TICKET, MODE_TRADES);
+    OrderTrailingStop(trailingStopLevel);
+}
+
+//+------------------------------------------------------------------+
+//| Place sell order                                                 |
+//+------------------------------------------------------------------+
+void SellOrder(double lotSize, double stopLossLevel, double takeProfitLevel, double trailingStopLevel)
+{
+    // Place sell order code here
+    // ...
+
+    // Set stop loss and take profit levels
+    OrderStopLoss(stopLossLevel);
+    OrderTakeProfit(takeProfitLevel);
+
+    // Enable trailing stop
+    OrderSelect(OrderTicket(), SELECT_BY_TICKET, MODE_TRADES);
+    OrderTrailingStop(trailingStopLevel);
+}
